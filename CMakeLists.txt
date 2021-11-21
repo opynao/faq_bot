@@ -35,7 +35,7 @@ file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 add_library(${CMAKE_PROJECT_NAME}_lib ${SRC_FILES})
 add_executable(${CMAKE_PROJECT_NAME} main.cpp)
-target_link_libraries(${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME}_lib)
+target_link_libraries(${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME}_lib TgBot)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
 
@@ -51,4 +51,4 @@ find_package(Boost COMPONENTS system REQUIRED)
 #     add_definitions(-DHAVE_CURL)
 # endif()
 
-target_link_libraries(${CMAKE_PROJECT_NAME} /usr/local/lib/libTgBot.a ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${CURL_LIBRARIES})
+add_subdirectory(tgbot-cpp)
