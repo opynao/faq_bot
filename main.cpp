@@ -5,6 +5,10 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <algorithm>
+#include <set>
+
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS // tgbot
 
 #include <tgbot/tgbot.h>
 #include <tgbot/types/InlineKeyboardButton.h>
@@ -98,25 +102,47 @@ spMarkup Developer()
     CreateButtons(button1, vButtons);
     return CreateInlineKeyboard(vButtons);
 }
+namespace Config
+{
+    constexpr std::int64_t vgUserId = 10490801; 
+    const std::set<std::int64_t> vAdministratorsUsersIds = { vgUserId };
+    constexpr auto token = "2141352150:AAHzKw-IuAY4zhjehZgYcudhahO1E_5kitY";
+}
+
+using userId_t = int64_t;
+
+bool IsAdministratorUserId( userId_t userId )
+{
+    return Config::vAdministratorsUsersIds.contains( userId );
+}
+
+std::string AdminStartMenu()
+{
+    return "/add_menu - Добавить новое меню\n";
+}
+
+std::string BuildStartMenu( userId_t userId )
+{
+    return "Привет! Я знаю ответы на следующие вопросы:\n"
+           "/eczane - Вся информация об аптеках\n"
+           "/pcr - Актуальная информация о сдаче ПЦР тестов\n"
+           "/money - Где сять (поменять) деньги\n"
+           "/map - Месторасположение ключевых локаций\n"
+           "/ikamet - Информация о получении (продлении) икамета\n"
+           "/imei - Информация о продлении IMEI через госуслуги\n"
+           "/developer - Сообщить разработчику о проблеме\n"
+           "/help - Используй /start для того, чтобы начать\n"
+           + IsAdministratorUserId( userId ) ? AdminStartMenu() : "" ;
+}
 
 int main()
 {
-    string token("2141352150:AAHzKw-IuAY4zhjehZgYcudhahO1E_5kitY");
+    Bot bot(Config::token);
 
-    Bot bot(token);
-
-    bot.getEvents().onCommand("start", [&bot](Message::Ptr message)
-        {
-            bot.getApi().sendMessage(message->chat->id, "Привет! Я знаю ответы на следующие вопросы:\n"
-                "/eczane - Вся информация об аптеках\n"
-                "/pcr - Актуальная информация о сдаче ПЦР тестов\n"
-                "/money - Где сять (поменять) деньги\n"
-                "/map - Месторасположение ключевых локаций\n"
-                "/ikamet - Информация о получении (продлении) икамета\n"
-                "/imei - Информация о продлении IMEI через госуслуги\n"
-                "/developer - Сообщить разработчику о проблеме\n"
-                "/help - Используй /start для того, чтобы начать\n");
-        });
+    bot.getEvents().onCommand("start", [&bot](Message::Ptr message) {
+            const std::string menuMessage = BuildStartMenu( message->from->id );
+            bot.getApi().sendMessage(message->chat->id, menuMessage );
+    });
 
     bot.getEvents().onCommand("eczane", [&bot](Message::Ptr message)
         {
@@ -160,8 +186,14 @@ int main()
             bot.getApi().sendMessage(message->chat->id, "Используй /start для того, чтобы начать");
         });
 
+    bot.getEvents().onCommand("add_menu", [&bot](Message::Ptr message)
+    {
+        if ( IsAdministratorUserId(message->from->id) )
+            bot.getApi().sendMessage(message->chat->id, "Добавлено\n");
 
-    signal(SIGINT, [](int s)
+    });
+
+    signal(SIGINT, [](int)
         {
             printf("SIGINT got\n");
             exit(0);

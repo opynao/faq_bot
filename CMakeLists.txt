@@ -15,12 +15,12 @@ add_compile_options(
 #    -Werror
     -Wnon-virtual-dtor
     -Wunused
-    -Wshadow
-    -Wold-style-cast
+#   -Wshadow //tgbot
+#    -Wold-style-cast
     -Wcast-align
     -Woverloaded-virtual
-    -Wconversion
-    -Wsign-conversion 
+#    -Wconversion
+#    -Wsign-conversion 
     -Wnull-dereference 
     -Wdouble-promotion
     -Wformat=2
