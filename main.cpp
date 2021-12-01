@@ -18,8 +18,6 @@
 #include <tgbot/types/InlineQueryResultLocation.h>
 #include "utils.h"
 
-#include "bot_command.h"
-
 using namespace std;
 using namespace TgBot;
 
