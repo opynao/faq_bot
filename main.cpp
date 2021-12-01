@@ -18,6 +18,8 @@
 #include <tgbot/types/InlineQueryResultLocation.h>
 #include "utils.h"
 
+#include "bot_command.h"
+
 using namespace std;
 using namespace TgBot;
 
@@ -121,18 +123,18 @@ std::string AdminStartMenu()
     return "/add_menu - Добавить новое меню\n";
 }
 
-std::string BuildStartMenu( userId_t userId )
+std::string BuildMenu ( userId_t userId )
 {
-    return "Привет! Я знаю ответы на следующие вопросы:\n"
-           "/eczane - Вся информация об аптеках\n"
-           "/pcr - Актуальная информация о сдаче ПЦР тестов\n"
-           "/money - Где сять (поменять) деньги\n"
-           "/map - Месторасположение ключевых локаций\n"
-           "/ikamet - Информация о получении (продлении) икамета\n"
-           "/imei - Информация о продлении IMEI через госуслуги\n"
-           "/developer - Сообщить разработчику о проблеме\n"
-           "/help - Используй /start для того, чтобы начать\n"
-           + IsAdministratorUserId( userId ) ? AdminStartMenu() : "" ;
+    return std::string("Привет! Я знаю ответы на следующие вопросы:\n")
+           + "/eczane - Вся информация об аптеках\n"
+           + "/pcr - Актуальная информация о сдаче ПЦР тестов\n"
+           + "/money - Где сять (поменять) деньги\n"
+           + "/map - Месторасположение ключевых локаций\n"
+           + "/ikamet - Информация о получении (продлении) икамета\n"
+           + "/imei - Информация о продлении IMEI через госуслуги\n"
+           + "/developer - Сообщить разработчику о проблеме\n"
+           + "/help - Используй /start для того, чтобы начать\n"
+           + ( IsAdministratorUserId( userId ) ? AdminStartMenu() : "" );
 }
 
 int main()
@@ -140,7 +142,7 @@ int main()
     Bot bot(Config::token);
 
     bot.getEvents().onCommand("start", [&bot](Message::Ptr message) {
-            const std::string menuMessage = BuildStartMenu( message->from->id );
+            const std::string menuMessage = BuildMenu( message->from->id );
             bot.getApi().sendMessage(message->chat->id, menuMessage );
     });
 
@@ -190,7 +192,6 @@ int main()
     {
         if ( IsAdministratorUserId(message->from->id) )
             bot.getApi().sendMessage(message->chat->id, "Добавлено\n");
-
     });
 
     signal(SIGINT, [](int)
