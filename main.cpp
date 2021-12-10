@@ -1,12 +1,17 @@
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS // tgbot
 
+#include "FaqBot.h"
+#include "utils.h"
+
 #include <tgbot/tgbot.h>
 #include <tgbot/types/InlineKeyboardButton.h>
 #include <tgbot/types/InlineKeyboardMarkup.h>
 #include <tgbot/EventBroadcaster.h>
 #include <tgbot/types/CallbackQuery.h>
 #include <tgbot/types/InlineQueryResultLocation.h>
-#include "utils.h"
+
+#include <rapidjson/document.h>
+#include <rapidjson/error/en.h>
 
 #include <csignal>
 #include <cstdio>
@@ -20,11 +25,24 @@
 #include <functional>
 #include <utility>
 #include <ranges>
+#include <variant>
+
+namespace Config
+{
+    constexpr auto token = "2141352150:AAHzKw-IuAY4zhjehZgYcudhahO1E_5kitY";
+    constexpr auto menuFileName = "menu.json";
+}
+
+namespace {
 
 using spButton = std::shared_ptr<TgBot::InlineKeyboardButton>;
 using spMarkup = std::shared_ptr<TgBot::InlineKeyboardMarkup>;
 using vButton_t = std::vector<spButton>;
 using vButtons_t = std::vector<vButton_t>;
+
+std::shared_ptr<TgBot::InlineKeyboardButton> CreateLinkButton( std::string description, std::string url ) {
+    return std::make_shared<TgBot::InlineKeyboardButton>( description, url );
+}
 
 void CreateButtons(const spButton& button, vButtons_t& vButtons)
 {
@@ -40,227 +58,107 @@ spMarkup CreateInlineKeyboard(const vButtons_t& vButtons)
     return markup;
 }
 
-spMarkup Eczane()
+std::string ToMenuItem( FaqBot::BotCommand const& command )
 {
-    auto button1 = std::make_shared<TgBot::InlineKeyboardButton>("Где сегодня находятся дежурные аптеки?", "https://www.eczaneler.gen.tr/nobetci-antalya-alanya");
-    vButtons_t vButtons;
-    CreateButtons(button1, vButtons);
-    return CreateInlineKeyboard(vButtons);
+    return "/" +  command.commandName + " -- " + command.commandDescription;
 }
 
-spMarkup Pcr()
+std::string GetStartMenu( std::vector<FaqBot::BotCommand> const& vBotCommands )
 {
-    auto button1 = std::make_shared<TgBot::InlineKeyboardButton>("Нужно ли сдавать тест при въезде в РФ гражданам РФ и иностранцам Будет ли штраф если не загрузить результат на ГУ?", 
-        "https://zen.yandex.ru/media/id/5ffad3caecead84c12cfc2fd/vopros-nujno-li-sdavat-test-pri-vezde-v-rf-grajdanam-rf-i-inostrancam-budet-li-shtraf-esli-ne-zagruzit-rezultat-na-gu-60e56e1ae34bad584ab89cbe");
-    vButtons_t vButtons;
-    CreateButtons(button1, vButtons);
-    return CreateInlineKeyboard(vButtons);
-}
-
-spMarkup Money()
-{
-    auto button1 = std::make_shared<TgBot::InlineKeyboardButton>("Где находится банкомат, в котором можно снят деньги без комиссии и с кэшбэком?", 
-        "https://livetraveling.ru/kak-snjat-dengi-v-turcii-bez-komissii-v-2021-godu/");
-
-    auto button2 = std::make_shared<TgBot::InlineKeyboardButton>("Как зарабатыватьмного денег?", 
-        "https://www.ozon.ru/product/razumnyy-investor-polnoe-rukovodstvo-po-stoimostnomu-investirovaniyu-grem-bendzhamin-241464176/?sh=eRhNgH4f");
-
-    vButtons_t vButtons;
-    CreateButtons(button1, vButtons);
-    CreateButtons(button2, vButtons);
-    return CreateInlineKeyboard(vButtons);
-}
-
-spMarkup Ikamet()
-{
-    auto button1 = std::make_shared<TgBot::InlineKeyboardButton>("Как получить икамет?", 
-        "https://e-ikamet.goc.gov.tr/Ikamet/Basvuru/IlkBasvuru");
-
-    auto button2 = std::make_shared<TgBot::InlineKeyboardButton>("Как продлить икамет?", 
-        "https://e-ikamet.goc.gov.tr/Ikamet/Basvuru/UzatmaBasvuru");
-
-    vButtons_t vButtons;
-    CreateButtons(button1, vButtons);
-    CreateButtons(button2, vButtons);
-    return CreateInlineKeyboard(vButtons);
-}
-
-spMarkup Imei()
-{
-    auto button1 = std::make_shared<TgBot::InlineKeyboardButton>("Как разблокировать IMEI?", 
-        "https://turkiye.gov.tr/btk-kullanim-suresi-uzatma");
-    vButtons_t vButtons;
-    CreateButtons(button1, vButtons);
-    return CreateInlineKeyboard(vButtons);
-}
-
-spMarkup Developer()
-{
-    auto button1 = std::make_shared<TgBot::InlineKeyboardButton>("Открыть чат", 
-        "https://t.me/opynao");
-    vButtons_t vButtons;
-    CreateButtons(button1, vButtons);
-    return CreateInlineKeyboard(vButtons);
-}
-namespace Config
-{
-    constexpr auto token = "2141352150:AAHzKw-IuAY4zhjehZgYcudhahO1E_5kitY";
-}
-
-using userId_t = int64_t;
-using chatId_t = int64_t;
-
-
-class FaqBot {
-private:
-    TgBot::Bot& m_refTgBot;
-    struct BotCommand {
-        std::string commandName;
-        std::string commandDescription;
-        std::function<void(TgBot::Message::Ptr)> commandHandler; 
-    };
-    std::vector< BotCommand > m_vBotCommands;
-
-    TgBot::Bot& GetTgBot() {
-        return m_refTgBot;
-    }
-
-    TgBot::Bot const& GetTgBot() const {
-        return m_refTgBot;
-    }
-
-    auto GetBotCommands() const {
-        return m_vBotCommands;
-    }
-
-    auto& GetBotCommands() {
-        return m_vBotCommands;
-    }
-
-    auto& GetTgBotEvents() {
-        return GetTgBot().getEvents();
-    }
-
-    auto& GetTgBotApi() {
-        return GetTgBot().getApi();
-    }
-
-    auto GetTgBotApi() const {
-        return GetTgBot().getApi();
-    }
-
-    void InitBotCommands() {
-        auto RegisterCommand = [this] ( const auto& command ) {
-            GetTgBotEvents().onCommand( command.commandName, command.commandHandler ); 
-        };
-        std::ranges::for_each( GetBotCommands(), RegisterCommand );
-    }
-
-    void SendMessage( chatId_t chatId, const std::string message ) {
-        GetTgBotApi().sendMessage( chatId,  message );
-    }
-
-    void SendMessage( chatId_t chatId, const TgBot::GenericReply::Ptr replyMarkup )
+    std::string strMenu;
+    for ( auto const& botCommand : vBotCommands )
     {
-        GetTgBotApi().sendMessage( chatId,"Я знаю ответы на следующие вопросы", false, 0, replyMarkup );
+        strMenu.append( "\n" + ToMenuItem( botCommand ) );
+    }
+    return strMenu;
+}
+
+} // namespaces
+
+std::string GetNonEmptyString( rapidjson::Value const& d, std::string name ) {
+    if ( !d.HasMember( name.c_str() ) ) {
+        throw std::invalid_argument( "document does not have member \"" + name + "\"");
     }
 
-    void SendLocation( chatId_t chatId, float latitude, float longitude ) {
-        GetTgBotApi().sendLocation( chatId, latitude, longitude );
+    if( !d[name.c_str()].IsString() ) {
+        throw std::invalid_argument( "\"" + name + "\" is not a string");
     }
 
-    static std::string ToMenuItem( const BotCommand& command ) {
-        return "/" +  command.commandName + " -- " + command.commandDescription;
+    if ( d[name.c_str()].Empty() ) {
+        throw std::invalid_argument( "\"" + name + "\" is empty");
     }
 
-    std::string BuildMenu() const
-    {
-        std::string strMenu;
-        for ( auto const& botCommand : GetBotCommands() )
-        {
-            strMenu.append( "\n" + ToMenuItem( botCommand ) );
-        }
-        return strMenu;
-    }
+    return d[name.c_str()].GetString();
+}
 
-    void OnCommandStart( TgBot::Message::Ptr message ) {
-        SendMessage( message->chat->id, BuildMenu() );
-    }
+auto GetNonEmptyArray( rapidjson::Value const& d, std::string name ) {
     
-    void OnCommandEczane( TgBot::Message::Ptr message ) {
-        SendMessage( message->chat->id, Eczane() );
+    if ( !d.HasMember( name.c_str() ) ) {
+        throw std::invalid_argument( "document does not have member \"" + name + "\"");
     }
 
-    void OnCommandPcr( TgBot::Message::Ptr message ) {
-        SendMessage( message->chat->id, Pcr() );
+    if( !d[name.c_str()].IsArray() ) {
+        throw std::invalid_argument( "\"" + name + "\" is not a array");
     }
 
-    void OnCommandMoney(TgBot::Message::Ptr message ) {
-        SendMessage( message->chat->id, Money() );
+    if ( d[name.c_str()].Empty() ) {
+        throw std::invalid_argument( "\"" + name + "\" is empty");
     }
 
-    void OnCommandMap( TgBot::Message::Ptr message ) {
-        SendMessage( message->chat->id, "Как попасть слева от чаcов в Махмутларе?" );
-        SendLocation( message->chat->id, 36.4885, 32.0962 );
-    }
+    return d[name.c_str()].GetArray();
+}
 
-    void OnCommandIkamet( TgBot::Message::Ptr message ) {
-        SendMessage( message->chat->id, Ikamet() );
-    }
 
-    void OnCommandImei( TgBot::Message::Ptr message ) {
-        SendMessage( message->chat->id, Imei() );
-    }
-
-    void OnCommandDeveloper( TgBot::Message::Ptr message ) {
-        SendMessage( message->chat->id, Developer() );
-    }
-
-    void OnCommandHelp( TgBot::Message::Ptr message ) {
-        SendMessage(message->chat->id, "Используй /start для того, чтобы начать");
-    }
-
-    void OnCommandAddInfo( TgBot::Message::Ptr message )
-    {
-        SendMessage(message->chat->id, "Добавлено\n");
-    }
-
-public:
-    explicit FaqBot( TgBot::Bot& bot ) : m_refTgBot ( bot )
-        , m_vBotCommands {
-            { "start", "Привет! Я знаю ответы на следующие вопросы:", [this]( TgBot::Message::Ptr message ) { OnCommandStart( message ); } },
-            { "eczane", "Вся информация об аптеках", [this]( TgBot::Message::Ptr message ) {  OnCommandEczane(  message ); } },
-            { "pcr", "Актуальная информация о сдаче ПЦР тестов", [this]( TgBot::Message::Ptr message ) {  OnCommandPcr( message ); } },
-            { "money", "Где снять (поменять) деньги", [this]( TgBot::Message::Ptr message ) {  OnCommandMoney( message ); } },
-            { "map", "Месторасположение ключевых локаций", [this]( TgBot::Message::Ptr message ) {  OnCommandMap( message ); } },
-            { "ikamet", "Информация о получении (продлении) икамета", [this]( TgBot::Message::Ptr message ) { OnCommandIkamet( message ); } },
-            { "imei", "Информация о продлении IMEI через госуслуги", [this]( TgBot::Message::Ptr message ) {  OnCommandImei( message ); } },
-            { "developer","Сообщить разработчику о проблеме", [this]( TgBot::Message::Ptr message ) {  OnCommandDeveloper( message ); } },
-            { "help", "Используй /start для того, чтобы начать", [this]( TgBot::Message::Ptr message ) {  OnCommandHelp( message ); } },
-            { "add_info", "Добавить информацию", [this]( TgBot::Message::Ptr message ) {  OnCommandAddInfo( message ); } }
-    }{   
-        InitBotCommands();
-    }
-private:
-
-    auto GetChatAdministrators( chatId_t chatId ) {
-        return GetTgBotApi().getChatAdministrators( chatId );
-    }
-
-    auto IsAdministratorUserId( chatId_t chatId, userId_t userId ) {
-        auto IsAdministrator = [] ( userId_t userId ) {
-        return [&userId] ( const TgBot::ChatMember::Ptr& ptrChatAdministrator ) {
-                return ptrChatAdministrator->user->id == userId;
-            };
-        };
-        return std::ranges::any_of( GetChatAdministrators( chatId ), IsAdministrator( userId ) );
-    }
-};
- 
 int main()
 {
+    std::vector<FaqBot::BotCommand> vMenu;
+
+    std::ifstream ifsMenu( Config::menuFileName );
+    std::string jMenu;
+    ifsMenu >> jMenu;
+    ifsMenu.close();
+
+    rapidjson::Document d;
+    rapidjson::ParseResult ok = d.Parse( jMenu.c_str() );
+    if (  !ok ) {
+        throw std::invalid_argument( std::string( Config::menuFileName )
+                + ": JSON parse error: " + rapidjson::GetParseError_En( ok.Code() )
+                        + " (" + std::to_string( ok.Offset() ) + ")" );
+    }
+
+    try {
+        auto menus = GetNonEmptyArray( d, "menu" );
+        for( auto const& menu : menus ) {
+            std::variant<std::string, std::shared_ptr<TgBot::InlineKeyboardMarkup>> script;
+            if ( menu.HasMember( "actions") ) {
+                auto actions = GetNonEmptyArray( menu, "actions" );
+                for( auto const& action : actions ) {
+                    script = GetNonEmptyString(action, "text");   
+                }
+            }
+
+            if ( menu.HasMember("url") ) {
+                auto urls = GetNonEmptyArray( menu, "url" );
+                vButtons_t vButtons;
+                for ( auto const& url : urls ) {
+                    auto button = CreateLinkButton( GetNonEmptyString(url, "menu_title")
+                                                  , GetNonEmptyString( url, "menu_description" ) );                    
+                    CreateButtons( button, vButtons );
+                }
+                script = CreateInlineKeyboard(vButtons);
+            }
+
+            vMenu.emplace_back( GetNonEmptyString( menu, "menu_title"), GetNonEmptyString( menu, "menu_description" ), script );
+        }
+        vMenu.emplace(vMenu.cbegin(), GetNonEmptyString( d, "menu_title" ), GetNonEmptyString( d, "menu_description" ), GetStartMenu(vMenu ) );
+
+    } catch ( std::invalid_argument const& )
+    {
+        throw;
+    }
+
     TgBot::Bot bot( Config::token );
-    FaqBot faqBot( bot );
+    auto spFaqBot = std::make_shared<FaqBot::FaqBot>( bot, vMenu );
 
     signal(SIGINT, [](int)
         {

@@ -12,7 +12,7 @@ add_compile_options(
     -Wall
     -Wextra
     -Wpedantic
-#    -Werror
+    -Werror
     -Wnon-virtual-dtor
     -Wunused
 #   -Wshadow //tgbot
@@ -34,7 +34,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 add_library(${CMAKE_PROJECT_NAME}_lib ${SRC_FILES})
-add_executable(${CMAKE_PROJECT_NAME} main.cpp)
+add_executable(${CMAKE_PROJECT_NAME} main.cpp FaqBot.cpp)
 target_link_libraries(${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME}_lib TgBot)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})

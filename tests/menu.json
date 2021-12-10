@@ -1,0 +1,123 @@
+"menu_title" : "start",
+"menu_description" : "Привет! Я знаю ответы на следующие вопросы:",
+"menu" :
+[
+    {
+        "menu_title":"eczane",
+        "menu_description": "Вся информация об аптеках", 
+        "buttons" :
+        [
+                {
+                "url" :
+                {
+                    "text" : "Где сегодня находятся дежурные аптеки?", 
+                    "link": " https://www.eczaneler.gen.tr/nobetci-antalya-alanya"
+                }
+            }
+        ]
+    },
+    {
+        "menu_title" : "pcr", 
+        "menu_description" : "Актуальная информация о сдаче ПЦР тестов",
+        "buttons" :
+        [
+            {
+                "url" :
+                {
+                    "text" : "Нужно ли сдавать тест при въезде в РФ гражданам РФ и иностранцам Будет ли штраф если не загрузить результат на ГУ?", 
+                    "link" : "https://zen.yandex.ru/media/id/5ffad3caecead84c12cfc2fd/vopros-nujno-li-sdavat-test-pri-vezde-v-rf-grajdanam-rf-i-inostrancam-budet-li-shtraf-esli-ne-zagruzit-rezultat-na-gu-60e56e1ae34bad584ab89cbe"
+                }
+            }
+        ]
+    },
+    {
+        "menu_title" : "money", 
+        "menu_description" : "Где снять (поменять) деньги",
+        "buttons" :
+        [
+            {
+                "url" :
+                {
+                    "text" : "Где находится банкомат, в котором можно снят деньги без комиссии и с кэшбэком?",
+                    "link" : "https://livetraveling.ru/kak-snjat-dengi-v-turcii-bez-komissii-v-2021-godu/"
+                }
+            },
+            {
+                "url" :
+                {
+                    "text" : "Как зарабатывать много денег?", 
+                    "link": "https://www.ozon.ru/product/razumnyy-investor-polnoe-rukovodstvo-po-stoimostnomu-investirovaniyu-grem-bendzhamin-241464176/?sh=eRhNgH4f"
+                }
+            }
+        ]
+    },
+    {
+        "menu_title" : "ikamet", 
+        "menu_description" : "Информация о получении (продлении) икамета", 
+        "buttons" :
+        [
+            {
+                "url" :
+                {
+                    "text" : "Как получить икамет?", 
+                    "link": "https://e-ikamet.goc.gov.tr/Ikamet/Basvuru/IlkBasvuru"
+                }
+            },
+            {
+                "url" :
+                {
+                    "text": "Как продлить икамет?", 
+                    "link": "https://e-ikamet.goc.gov.tr/Ikamet/Basvuru/UzatmaBasvuru"
+                }
+            }
+        ]
+    },
+    {
+        "menu_title" : "imei", 
+        "menu_description" : "Информация о продлении IMEI через госуслуги",
+        "buttons":
+        [
+            {
+                "url" :
+                {
+                    "text" : "Как разблокировать IMEI?", 
+                    "link" : "https://turkiye.gov.tr/btk-kullanim-suresi-uzatma"
+                }
+            }
+        ]
+    },
+    {
+        "menu_title" : "developer",
+        "menu_description" : "Сообщить разработчику о проблеме", 
+        "buttons" :
+        [
+            { 
+                "url" :
+                {
+                    "text" : "Открыть чат",
+                    "link" : "https://t.me/opynao"
+                }
+            }
+        ]
+    },
+    {
+        "menu_title" : "help", 
+        "menu_description" : "Используй /start для того, чтобы начать", 
+        "actions" :
+        [
+            {
+                "text" : "Используй /start для того, чтобы начать"
+            }
+        ]
+    },
+    {
+        "menu_title" : "add_info", 
+        "menu_description" : "Добавить информацию", 
+        "actions" :
+        [
+            {
+                "text": "Добавлено"
+            }
+        ]
+    }
+]
