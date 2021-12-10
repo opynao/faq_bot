@@ -11,10 +11,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_compile_options(
     -Wall
     -Wextra
-    -Wpedantic
-    -Werror
+#    -Wpedantic
+#    -Werror
     -Wnon-virtual-dtor
-    -Wunused
+#    -Wunused
 #   -Wshadow //tgbot
 #    -Wold-style-cast
     -Wcast-align

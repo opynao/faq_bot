@@ -1,7 +1,6 @@
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS // tgbot
 
 #include "FaqBot.h"
-#include "utils.h"
 
 #include <tgbot/tgbot.h>
 #include <tgbot/types/InlineKeyboardButton.h>
@@ -26,7 +25,11 @@
 #include <utility>
 #include <ranges>
 #include <variant>
+#include <iostream>
+#include <iterator>
 
+#define LOGF(msg) std::cerr << __FUNCTION__ << ": " << msg << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl
+#define LOGFNM LOGF("")
 namespace Config
 {
     constexpr auto token = "2141352150:AAHzKw-IuAY4zhjehZgYcudhahO1E_5kitY";
@@ -46,6 +49,7 @@ std::shared_ptr<TgBot::InlineKeyboardButton> CreateLinkButton( std::string descr
 
 void CreateButtons(const spButton& button, vButtons_t& vButtons)
 {
+    LOGFNM;
     vButton_t vButton;
     vButton.push_back(button);
     vButtons.push_back(vButton);
@@ -53,6 +57,7 @@ void CreateButtons(const spButton& button, vButtons_t& vButtons)
 
 spMarkup CreateInlineKeyboard(const vButtons_t& vButtons)
 {
+    LOGFNM;
     auto markup = std::make_shared<TgBot::InlineKeyboardMarkup>();
     markup->inlineKeyboard = std::move(vButtons);
     return markup;
@@ -60,11 +65,13 @@ spMarkup CreateInlineKeyboard(const vButtons_t& vButtons)
 
 std::string ToMenuItem( FaqBot::BotCommand const& command )
 {
+    LOGFNM;
     return "/" +  command.commandName + " -- " + command.commandDescription;
 }
 
 std::string GetStartMenu( std::vector<FaqBot::BotCommand> const& vBotCommands )
 {
+    LOGFNM;
     std::string strMenu;
     for ( auto const& botCommand : vBotCommands )
     {
@@ -76,50 +83,61 @@ std::string GetStartMenu( std::vector<FaqBot::BotCommand> const& vBotCommands )
 } // namespaces
 
 std::string GetNonEmptyString( rapidjson::Value const& d, std::string name ) {
+    LOGFNM;
     if ( !d.HasMember( name.c_str() ) ) {
         throw std::invalid_argument( "document does not have member \"" + name + "\"");
     }
-
+    LOGFNM;
     if( !d[name.c_str()].IsString() ) {
         throw std::invalid_argument( "\"" + name + "\" is not a string");
     }
-
-    if ( d[name.c_str()].Empty() ) {
+    LOGFNM;
+    if ( !d[name.c_str()].GetStringLength() ) {
         throw std::invalid_argument( "\"" + name + "\" is empty");
     }
-
+    LOGFNM;
     return d[name.c_str()].GetString();
 }
 
-auto GetNonEmptyArray( rapidjson::Value const& d, std::string name ) {
-    
+template<class T>
+auto GetNonEmptyArray( T const& d, std::string const& name ) {
+    LOGFNM;
     if ( !d.HasMember( name.c_str() ) ) {
         throw std::invalid_argument( "document does not have member \"" + name + "\"");
     }
-
+    LOGFNM;
     if( !d[name.c_str()].IsArray() ) {
         throw std::invalid_argument( "\"" + name + "\" is not a array");
     }
-
+    LOGFNM;
     if ( d[name.c_str()].Empty() ) {
         throw std::invalid_argument( "\"" + name + "\" is empty");
     }
-
+    LOGFNM;
     return d[name.c_str()].GetArray();
 }
 
 
 int main()
 {
+    LOGFNM;
     std::vector<FaqBot::BotCommand> vMenu;
 
     std::ifstream ifsMenu( Config::menuFileName );
     std::string jMenu;
-    ifsMenu >> jMenu;
+
+    std::for_each( std::istream_iterator<std::string>( ifsMenu )
+             , std::istream_iterator<std::string>()
+             , [&jMenu]( auto&& str) { jMenu.append( str ); } );
+    
     ifsMenu.close();
 
+    LOGF( "Read:" + jMenu );
     rapidjson::Document d;
     rapidjson::ParseResult ok = d.Parse( jMenu.c_str() );
+
+    assert( d.IsObject() );
+
     if (  !ok ) {
         throw std::invalid_argument( std::string( Config::menuFileName )
                 + ": JSON parse error: " + rapidjson::GetParseError_En( ok.Code() )
@@ -127,29 +145,35 @@ int main()
     }
 
     try {
+        LOGFNM;
         auto menus = GetNonEmptyArray( d, "menu" );
+        LOGF("Start parcing");
         for( auto const& menu : menus ) {
             std::variant<std::string, std::shared_ptr<TgBot::InlineKeyboardMarkup>> script;
+            LOGF("Menu found: " + GetNonEmptyString( menu, "menu_title") );
             if ( menu.HasMember( "actions") ) {
                 auto actions = GetNonEmptyArray( menu, "actions" );
                 for( auto const& action : actions ) {
+                    LOGF("Action found");
                     script = GetNonEmptyString(action, "text");   
                 }
             }
-
-            if ( menu.HasMember("url") ) {
-                auto urls = GetNonEmptyArray( menu, "url" );
+            if ( menu.HasMember("buttons") ) {
+                auto buttons = GetNonEmptyArray( menu, "buttons" );
                 vButtons_t vButtons;
-                for ( auto const& url : urls ) {
-                    auto button = CreateLinkButton( GetNonEmptyString(url, "menu_title")
-                                                  , GetNonEmptyString( url, "menu_description" ) );                    
-                    CreateButtons( button, vButtons );
+                LOGF("Buttons found");
+                for ( auto const& button : buttons ) {
+                    LOGF("Button found");
+                    auto linkButton = CreateLinkButton( GetNonEmptyString( button["url"], "text" )
+                                                   , GetNonEmptyString( button["url"], "link" ) );                    
+                    CreateButtons( linkButton, vButtons );
                 }
                 script = CreateInlineKeyboard(vButtons);
             }
-
+            LOGF("Add menu: " + GetNonEmptyString( menu, "menu_title") );
             vMenu.emplace_back( GetNonEmptyString( menu, "menu_title"), GetNonEmptyString( menu, "menu_description" ), script );
         }
+        LOGF("Add main menu");
         vMenu.emplace(vMenu.cbegin(), GetNonEmptyString( d, "menu_title" ), GetNonEmptyString( d, "menu_description" ), GetStartMenu(vMenu ) );
 
     } catch ( std::invalid_argument const& )
@@ -158,7 +182,8 @@ int main()
     }
 
     TgBot::Bot bot( Config::token );
-    auto spFaqBot = std::make_shared<FaqBot::FaqBot>( bot, vMenu );
+    auto spFaqBot = std::make_shared<FaqBot::FaqBot>( bot );
+    spFaqBot->Init( vMenu );
 
     signal(SIGINT, [](int)
         {

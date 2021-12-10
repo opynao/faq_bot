@@ -11,9 +11,10 @@ using chatId_t = int64_t;
 using userId_t = int64_t;
 
 struct BotCommand;
-class FaqBot final : protected std::enable_shared_from_this<FaqBot> {
+class FaqBot final : public std::enable_shared_from_this<FaqBot> {
 public:
-    explicit FaqBot( TgBot::Bot& bot, std::vector< BotCommand > botCommands );
+    explicit FaqBot( TgBot::Bot& bot );
+    void Init( std::vector<BotCommand> vBotCommands );
     void SendMessage( chatId_t const, std::string const& message );
     void SendMessage( chatId_t const, const TgBot::GenericReply::Ptr );
     void SendLocation( chatId_t const, float const latitude, float const longitude );
