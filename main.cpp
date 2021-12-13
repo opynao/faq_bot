@@ -118,38 +118,36 @@ TgBot::KeyboardButton::Ptr GetButton( rapidjson::Value const& button )
 }
 
 class EczaneMessageHandler {
+        struct Pharmacy {
+        std::string name;
+        std::string address;
+        std::pair<float, float> location;
+    };
+
+    FaqBot::FaqBot& m_refBot;
+
 public:
     explicit EczaneMessageHandler( FaqBot::FaqBot& bot ) : m_refBot { bot } {}
 
     void operator() ( TgBot::Message::Ptr const msg ) {
         if ( msg->location ) {
             auto const pharmacy = GetNearestPharmacyOnDury( msg->location->longitude, msg->location->latitude );
-            m_refBot.SendMessage( msg->chat->id, std::get<Name>(pharmacy) );
-            m_refBot.SendMessage( msg->chat->id, std::get<Adress>(pharmacy) );
-            auto&& [longitude, latitude] = std::>pharmacy.GetLocation();
+            m_refBot.SendMessage( msg->chat->id, pharmacy.name );
+            m_refBot.SendMessage( msg->chat->id, pharmacy.address );
+            auto const& [longitude, latitude] = pharmacy.location;
             m_refBot.SendLocation( msg->chat->id,  latitude, longitude );
+        }
+        else {
+            m_refBot.SendMessage(msg->chat->id, "Махаться будешь? До смерти, пока смерть не разлучит нас");
         }
     }
 
-    std::pair<float, float> GetLocationOfNearestPharmacy( float longitude, float latitude ) {
-        return GetPharmacyOnDutyLocationOfDisrict( DetectDistrict( longitude, latitude ) );
-    }
-
 private:
-    std::pair<float, float>  GetPharmacyOnDutyLocationOfDisrict( Config::District const  )
+    Pharmacy GetNearestPharmacyOnDury( float longtitude, float latitude )
     {
-        [[deprecated("ONLY FOR TEST")]]
-        return { 32.10605800151825, 36.479094763896875 };
+            [[deprecated("ONLY FOR TEST")]];
+            return{ "NNNNNNNN", "AAAAAAAAA", { 32.10605800151825, 36.479094763896875 } };
     }
-
-    Config::District DetectDistrict( float longitude, float latitude )
-    {
-        [[deprecated("ONLY FOR TEST")]]
-        return Config::District::MAHMUTLAR;
-    }
-
-private:
-    FaqBot::FaqBot& m_refBot;
 };
 
 int main() {
